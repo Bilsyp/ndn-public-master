@@ -9,9 +9,29 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ndn/autoconfig": "^0.0.20250307",
+    "@ndn/endpoint": "^0.0.20250307",
+    "@ndn/fileserver": "^0.0.20250307",
+    "@ndn/fw": "^0.0.20250307",
+    "@ndn/keychain": "^0.0.20250307",
+    "@ndn/packet": "^0.0.20250307",
+    "@ndn/quic-transport": "^0.0.20250307",
+    "@ndn/rdr": "^0.0.20250307",
+    "@ndn/segmented-object": "^0.0.20250307",
+    "@ndn/util": "^0.0.20250307",
+    "chart.js": "3.7.1",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-adapter-luxon": "1.1.0",
+    "chartjs-plugin-streaming": "2.0.0",
+    "hirestime": "^7.0.4",
     "next": "16.0.10",
+    "p-queue": "^9.0.0",
     "react": "19.2.1",
-    "react-dom": "19.2.1"
+    "react-dom": "19.2.1",
+    "react-icons": "^5.5.0",
+    "react-papaparse": "^4.4.0",
+    "shaka-player": "^4.16.12",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

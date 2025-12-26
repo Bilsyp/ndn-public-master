@@ -1,69 +1,88 @@
 "use client";
 import { playerManager } from "@/lib/player";
-import Script from "next/script";
-import { useEffect, useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useStatsStore } from "@/store";
+import { usePlayerConfigStore } from "@/store";
+import shaka from "shaka-player";
+import { connection } from "@/lib/ndn/ndnConnection";
 export default function ShakaPlayer() {
   const videoElement = useRef(null);
   const videoContainer = useRef(null);
-  const { stats, updateStat } = useStatsStore();
-  const initialized = async (shaka) => {
-    if (shaka.Player.isBrowserSupported()) {
-      shaka.polyfill.installAll();
-      const ms = new playerManager(
-        videoContainer.current,
-        videoElement.current,
-        shaka,
-        updateStat,
-        stats
-      );
-      await ms.init();
-      await ms.load(
-        "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd"
-      );
+  const managerRef = useRef(null); // 🔥 penting
+  const [ready, setReady] = useState(false);
+  const { stats, updateStat, resetStats, videoTrack } = useStatsStore();
+  const source = usePlayerConfigStore((s) => s.config.source);
+  const abrAlgorithm = usePlayerConfigStore((s) => s.config.abr.algorithm);
+  async function conn() {
+    try {
+      await connection();
+    } catch (error) {
+      console.log("errors");
     }
+  }
+  /* ================================
+   * 1️⃣ INIT PLAYER (ONCE)
+   * ================================ */
+  useEffect(() => {
+    if (!shaka.Player.isBrowserSupported()) {
+      console.error("Shaka Player not supported");
+      return;
+    }
+    conn();
+    shaka.polyfill.installAll();
 
-    //
-    //   const localPlayer = new shaka.Player();
-    //   const ui = new shaka.ui.Overlay(
-    //     localPlayer,
-    //     videoContainer.current,
-    //     videoElement.current
-    //   );
-    //   ui.configure({
-    //     castReceiverAppId: "07AEE832",
-    //     castAndroidReceiverCompatible: true,
-    //     seekBarColors: {
-    //       base: "rgba(255, 255, 255, 0.3)",
-    //       buffered: "rgba(255, 255, 255, 0.54)",
-    //       played: "red",
-    //     },
-    //   });
-    //   await localPlayer.attach(videoElement.current);
-    //   await localPlayer.load(
-    //     "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd"
-    //   );
-    // }
-  };
-  // console.log(stats);
-  // "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd"
+    const manager = new playerManager(
+      videoContainer.current,
+      videoElement.current,
+      shaka,
+      updateStat,
+      stats,
+      videoTrack
+    );
+
+    manager.init();
+    managerRef.current = manager;
+    manager.test();
+    return () => {
+      manager.destroy?.();
+      managerRef.current = null;
+    };
+  }, []);
+
+  /* ================================
+   * 2️⃣ LOAD SOURCE (SESSION CHANGE)
+   * ================================ */
+  useEffect(() => {
+    if (!managerRef.current || !source) return;
+
+    const load = async () => {
+      resetStats(); // 🔄 session baru
+      await managerRef.current.load(source.url);
+    };
+
+    load();
+  }, [source]);
+
+  /* ================================
+   * 3️⃣ APPLY ABR (RUNTIME)
+   * ================================ */
+  useEffect(() => {
+    if (!managerRef.current) return;
+    managerRef.current.setAbrAlgorithm(abrAlgorithm);
+  }, [abrAlgorithm]);
 
   return (
-    <div>
-      <div className="relative overflow-hidden rounded-xl border bg-black shadow-sm">
-        <div className="aspect-video" ref={videoContainer}>
-          <video className="h-full w-full object-cover" ref={videoElement} />
-        </div>
+    <div className="relative w-full text-center  rounded-xl border bg-black shadow-sm">
+      <div className="  bg-red-900 aspect-video " ref={videoContainer}>
+        <video
+          className="h-full w-full object-cover"
+          controls={ready}
+          preload="metadata"
+          poster="/svg/cute.png"
+          ref={videoElement}
+          onLoadedMetadata={() => setReady(true)}
+        />
       </div>
-
-      <Script
-        src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.16.3/shaka-player.ui.min.js"
-        onLoad={() => {
-          if (window.shaka) {
-            initialized(window.shaka);
-          }
-        }}
-      />
     </div>
   );
 }

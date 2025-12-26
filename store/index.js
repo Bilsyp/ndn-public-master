@@ -1,5 +1,5 @@
 import { create } from "zustand";
-
+import { ABR_ALGORITHMS } from "@/features/player/configAbr";
 const useUrl = create((set) => ({
   url: "",
   setUrl: (url) => set({ url }),
@@ -39,6 +39,7 @@ const initialStats = {
   manifestPeriodCount: [],
   manifestGapCount: [],
   switchHistory: [],
+  videoTrack: [],
   stateHistory: [],
   rtt_ms: [],
   jitter_ms: [],
@@ -46,7 +47,14 @@ const initialStats = {
 
 export const useStatsStore = create((set, get) => ({
   stats: { ...initialStats },
-
+  videoTrack: (track) => {
+    set((state) => ({
+      stats: {
+        ...state.stats,
+        videoTrack: track,
+      },
+    }));
+  },
   // ⚙️ Nambah banyak sekaligus
   setStats: (newStats) => {
     const prev = get().stats;
@@ -69,6 +77,10 @@ export const useStatsStore = create((set, get) => ({
       },
     });
   },
+  // 🔄 Reset semua ke state awal
+  resetStats: () => {
+    set({ stats: { ...initialStats } });
+  },
   incStall: () => {
     set((state) => ({
       stats: {
@@ -85,4 +97,50 @@ export const useStatsStore = create((set, get) => ({
   resetStats: () => set({ stats: { ...initialStats } }),
 }));
 
+const initialPlayerConfig = {
+  abr: {
+    algorithm: ABR_ALGORITHMS.THROUGHPUT_BASED.key,
+  },
+  source: null,
+};
+
+export const usePlayerConfigStore = create((set, get) => ({
+  config: { ...initialPlayerConfig },
+
+  // ⚙️ set banyak config
+  setConfig: (newConfig) => {
+    set({
+      config: {
+        ...get().config,
+        ...newConfig,
+      },
+    });
+  },
+
+  // 🎬 set source
+  setSource: (source) => {
+    set({
+      config: {
+        ...get().config,
+        source,
+      },
+    });
+  },
+
+  // 🧠 set ABR algorithm
+  setAbrAlgorithm: (algorithmKey) => {
+    set({
+      config: {
+        ...get().config,
+        abr: {
+          algorithm: algorithmKey,
+        },
+      },
+    });
+  },
+  // 🔄 reset
+  resetConfig: () => {
+    set({ config: { ...initialPlayerConfig } });
+  },
+}));
 export { usePlayer, useUrl, useStatsStore };

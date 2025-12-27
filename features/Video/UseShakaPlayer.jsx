@@ -78,7 +78,6 @@ export default function ShakaPlayer() {
           className="h-full w-full object-cover"
           controls={ready}
           preload="metadata"
-          poster="/svg/cute.png"
           ref={videoElement}
           onLoadedMetadata={() => setReady(true)}
         />
